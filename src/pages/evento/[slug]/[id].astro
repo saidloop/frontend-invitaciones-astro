@@ -1,0 +1,168 @@
+---
+export const prerender = false;
+import '../../../styles/global.css'; 
+import RsvpButtons from '../../../components/RsvpButtons';
+
+// 1. Obtenemos el ID de la URL
+const { id } = Astro.params;
+
+// 2. Conectamos con Django (Tu Backend Real)
+let invitado = null;
+let error = false;
+
+try {
+  const response = await fetch(`https://api-invitaciones-django.onrender.com/api/invitacion/${id}/`);
+  if (response.ok) {
+    invitado = await response.json();
+  } else {
+    error = true;
+  }
+} catch (e) {
+  error = true;
+}
+
+// Si el UUID no existe, mandamos al 404
+if (error || !invitado) {
+  return Astro.redirect('/404');
+}
+
+// Extraemos el evento
+const { evento } = invitado;
+
+// 3. Fallbacks elegantes (por si en Django aún no tienes estos campos creados)
+const tituloEvento = evento.nombre || "Mis XV Años";
+const citaIntroduccion = "Un momento inolvidable que se atesora en el corazón para siempre. Quiero que compartas conmigo este día tan especial.";
+const hashtag = "#MisXV";
+---
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>{tituloEvento}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@400;500;600&family=Great+Vibes&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --color-gold: #ff9ed0; /* Naranja/dorado para los acentos */
+        --font-serif: 'Playfair Display', serif;
+        --font-sans: 'Montserrat', sans-serif;
+        --font-cursive: 'Great Vibes', cursive;
+      }
+      body {
+        font-family: var(--font-sans);
+        color: #dbd1d9;
+      }
+      h1, h2, h3, .serif {
+        font-family: var(--font-serif);
+      }
+    </style>
+  </head>
+  <body class="bg-rose-900 md:p-0">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-16 max-w-7xl mx-auto">
+
+      <div class="bg-pink-300 pb-10">
+
+        <div class="relative w-full h-[100dvh] md:h-[500px]">
+          <img 
+            src="/photo.webp" 
+            alt="Foto Principal" 
+            class="w-full h-full object-cover object-top"
+          />
+<div class="absolute inset-0 flex flex-col items-center justify-start text-center p-6 pt-20 bg-black/40">
+  <h1 class="text-6xl text-white font-normal mb-2" style="font-family: var(--font-cursive);">
+    {tituloEvento}
+  </h1>
+  <p class="text-xl text-white tracking-[0.2em]">{evento.fecha_formateada}</p>
+</div>
+
+<div 
+  class="absolute inset-0 pointer-events-none"
+  style="
+    /* El fondo pasa de transparente a un azul oscuro/slate premium con 75% de opacidad */
+    background: linear-gradient(to bottom, rgba(211, 122, 196, 0) 60%, rgba(42, 15, 38, 0.75) 100%);
+    
+    /* Efecto de desenfoque de cristal */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    
+    /* Máscara para que el efecto solo exista abajo */
+    mask-image: linear-gradient(to bottom, transparent 60%, black 85%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 60%, black 85%);
+  "
+></div>
+
+<div 
+  class="absolute inset-0 ring-1 ring-inset ring-white/10 pointer-events-none"
+  style="
+    mask-image: linear-gradient(to bottom, transparent 60%, black 85%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 60%, black 85%);
+  "
+></div>
+
+<div class="absolute bottom-0 left-0 right-0 mx-6 px-8 py-10 flex flex-col items-center text-center z-30">
+    
+    <h2 class="text-white text-3xl text-slate-900 font-normal mb-4">¡Hola, {invitado.nombre}!</h2>
+    
+<p class="text-sm text-slate-200 max-w-sm leading-relaxed mb-2 mx-auto">
+  Me hace mucha ilusión que {invitado.pases === 1 ? 'me acompañes' : 'me acompañen'}. Hemos reservado <strong class="text-[var(--color-gold)]">
+    {invitado.pases} {invitado.pases === 1 ? 'pase' : 'pases'}
+  </strong> exclusivamente para {invitado.pases === 1 ? 'ti' : 'tu familia'}.
+</p>
+
+          <RsvpButtons guestId={id} initialStatus={invitado.estado_asistencia} client:load />
+
+  </div>
+
+        </div>
+
+        <div class="px-8 mt-10 flex flex-col items-center text-center">
+          <p class="text-sm text-slate-900 max-w-md leading-relaxed font-bold mb-10">
+            {citaIntroduccion}
+          </p>
+        </div>
+
+<div class="bg-white rounded-3xl shadow-lg px-8 py-10 flex flex-col items-center text-center mx-6 relative">
+  
+  <h2 class="text-3xl text-slate-900 font-normal mb-4">Ubicación</h2>
+  
+  <p class="text-sm text-slate-700 max-w-sm leading-relaxed font-semibold mb-6">
+    {evento.ubicacion}
+  </p>
+
+  {evento.url_mapa && (
+    <div class="w-full h-64 md:h-80 mb-6 rounded-2xl overflow-hidden border border-slate-200 shadow-inner">
+      <iframe 
+        src={evento.url_mapa} 
+        width="100%" 
+        height="100%" 
+        style="border:0;" 
+        allowfullscreen="" 
+        loading="lazy" 
+        referrerpolicy="no-referrer-when-downgrade"
+        class="w-full h-full grayscale-[30%] contrast-125"
+      ></iframe>
+    </div>
+  )}
+
+  {evento.url_mapa && (
+    <a 
+      href={evento.url_mapa} 
+      target="_blank"
+      class="inline-block text-xs text-[var(--color-gold)] uppercase font-semibold px-6 py-2.5 border border-[var(--color-gold)] rounded-full tracking-wider hover:bg-[var(--color-gold)] hover:text-white transition mb-10"
+    >
+      Abrir en la app de mapas
+    </a>
+  )}
+
+  <svg class="w-6 h-6 text-[var(--color-gold)] opacity-70" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+  </svg>
+</div>
+
+        
+
+      </div> 
+
+    </div>
+  </body>
+</html>
