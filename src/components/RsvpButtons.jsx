@@ -7,7 +7,7 @@ export default function RsvpButtons({ guestId, initialStatus }) {
   const handleResponse = async (newStatus) => {
     setLoading(true);
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/invitacion/${guestId}/responder/`, {
+      const response = await fetch(`https://api-invitaciones-django.onrender.com/api/invitacion/${guestId}/responder/`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ estado_asistencia: newStatus })
